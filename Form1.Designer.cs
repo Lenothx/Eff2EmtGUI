@@ -59,7 +59,7 @@
             this.textEQFolder.Name = "textEQFolder";
             this.textEQFolder.Size = new System.Drawing.Size(490, 20);
             this.textEQFolder.TabIndex = 1;
-            this.textEQFolder.TextChanged += new System.EventHandler(this.textEQFolder_TextChanged);
+            this.textEQFolder.TextChanged += new System.EventHandler(this.TextEQFolder_TextChanged);
             // 
             // buttonBrowseEQFolder
             // 
@@ -70,7 +70,7 @@
             this.buttonBrowseEQFolder.TabIndex = 2;
             this.buttonBrowseEQFolder.Text = "&...";
             this.buttonBrowseEQFolder.UseVisualStyleBackColor = true;
-            this.buttonBrowseEQFolder.Click += new System.EventHandler(this.buttonBrowseEQFolder_Click);
+            this.buttonBrowseEQFolder.Click += new System.EventHandler(this.ButtonBrowseEQFolder_Click);
             // 
             // label2
             // 
@@ -102,7 +102,7 @@
             this.buttonConvert.TabIndex = 5;
             this.buttonConvert.Text = "Convert!";
             this.buttonConvert.UseVisualStyleBackColor = true;
-            this.buttonConvert.Click += new System.EventHandler(this.buttonConvert_Click);
+            this.buttonConvert.Click += new System.EventHandler(this.ButtonConvert_Click);
             // 
             // label4
             // 
@@ -133,7 +133,7 @@
             this.listZoneEffs.TabIndex = 4;
             this.listZoneEffs.UseCompatibleStateImageBehavior = false;
             this.listZoneEffs.View = System.Windows.Forms.View.List;
-            this.listZoneEffs.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.listZoneEffs_ItemChecked);
+            this.listZoneEffs.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.ListZoneEffs_ItemChecked);
             // 
             // progressConversion
             // 
@@ -148,9 +148,9 @@
             // 
             this.threadConverter.WorkerReportsProgress = true;
             this.threadConverter.WorkerSupportsCancellation = true;
-            this.threadConverter.DoWork += new System.ComponentModel.DoWorkEventHandler(this.threadConverter_DoWork);
-            this.threadConverter.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.threadConverter_ProgressChanged);
-            this.threadConverter.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.threadConverter_RunWorkerCompleted);
+            this.threadConverter.DoWork += new System.ComponentModel.DoWorkEventHandler(this.ThreadConverter_DoWork);
+            this.threadConverter.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.ThreadConverter_ProgressChanged);
+            this.threadConverter.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.ThreadConverter_RunWorkerCompleted);
             // 
             // Form1
             // 

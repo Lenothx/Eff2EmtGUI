@@ -2,24 +2,14 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Text;
+using System.Linq;
 using System.Windows.Forms;
-
 
 namespace Eff2EmtGUI
 {
     public partial class Form1 : Form
     {
-        // Can be customized with any available text editors. Will be checked from top to bottom, and the first one found will be execute for an .emt file.
-        public static List<string> TextEditors = new List<string>()
-        {
-            "C:\\Program Files (x86)\\Notepad++\\notepad++.exe",
-            "C:\\Program Files\\Notepad++\\notepad++.exe",
-            "C:\\Windows\notepad.exe"
-        };
-
         public Form1()
         {
             InitializeComponent();
@@ -41,28 +31,35 @@ namespace Eff2EmtGUI
         {
             labelZonesSelected.Text = listZoneEffs.CheckedItems.Count.ToString();
             labelZoneCount.Text = listZoneEffs.Items.Count.ToString();
-            
+
             buttonConvert.Enabled = (listZoneEffs.CheckedItems.Count > 0);
         }
 
         private void CheckZoneList()
         {
             listZoneEffs.Items.Clear();
-            
-            if (Directory.Exists(textEQFolder.Text))
+            var directoryPath = textEQFolder.Text;
+            if (!string.IsNullOrWhiteSpace(directoryPath) && Directory.Exists(directoryPath))
             {
-                FileInfo[] _files = new DirectoryInfo(textEQFolder.Text).GetFiles("*_sounds.eff");
-
-                foreach (FileInfo _file in _files)
-                {
-                    listZoneEffs.Items.Add(_file.Name.Substring(0, _file.Name.Length - "_sounds.eff".Length));
-                }
+                PopulateZoneListFromDirectory(textEQFolder.Text);
             }
 
             CheckIfReady();
         }
 
-        private void textEQFolder_TextChanged(object sender, EventArgs e)
+        private void PopulateZoneListFromDirectory(string directoryPath)
+        {
+            var zoneFiles = new DirectoryInfo(directoryPath)
+                .GetFiles("*_sounds.eff")
+                .Select(file => Path.GetFileNameWithoutExtension(file.Name)
+                .Replace("_sounds", ""));
+            foreach (var zoneName in zoneFiles)
+            {
+                listZoneEffs.Items.Add(zoneName);
+            }
+        }
+
+        private void TextEQFolder_TextChanged(object sender, EventArgs e)
         {
             CheckZoneList();
         }
@@ -81,47 +78,49 @@ namespace Eff2EmtGUI
 
         private void Form1_DragDrop(object sender, DragEventArgs e)
         {
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                return;
-            }
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
 
-            Array _files = (Array)e.Data.GetData(DataFormats.FileDrop);
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
-            if ((_files == null) || (_files.Length < 1))
-            {
-                return;
-            }
+            if (files.Length == 0) return;
 
-            textEQFolder.Text = Path.GetDirectoryName(_files.GetValue(0).ToString());
-
+            SetEQFolder(files[0]);
             CheckZoneList();
+            CheckZoneEffs(files);
+        }
 
-            for (int _filenum = 0; _filenum < _files.Length; _filenum++)
+        private void SetEQFolder(string filePath)
+        {
+            textEQFolder.Text = Path.GetDirectoryName(filePath);
+        }
+
+        private void CheckZoneEffs(string[] files)
+        {
+            foreach (string filePath in files)
             {
-                FileInfo _file = new FileInfo(_files.GetValue(_filenum).ToString());
+                FileInfo file = new FileInfo(filePath);
+                if (!file.Exists) continue;
 
-                if (_file.Exists)
+                CheckMatchingZones(file.Name);
+            }
+        }
+
+        private void CheckMatchingZones(string fileName)
+        {
+            for (int index = 0; index < listZoneEffs.Items.Count; index++)
+            {
+                if (fileName.StartsWith(listZoneEffs.Items[index].Text, StringComparison.CurrentCultureIgnoreCase))
                 {
-                    //MessageBox.Show(listZoneEffs.Items[0].Name);
-
-                    for (int _zoneindex = 0; _zoneindex < listZoneEffs.Items.Count; _zoneindex++)
-                    {
-                        if (_file.Name.StartsWith(listZoneEffs.Items[_zoneindex].Text, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            listZoneEffs.Items[_zoneindex].Checked = true;
-                            listZoneEffs.EnsureVisible(_zoneindex);
-                            //listZoneEffs.TopIndex = Math.Max(_zoneindex - 3, 0);
-                        }
-                    }
+                    listZoneEffs.Items[index].Checked = true;
+                    listZoneEffs.EnsureVisible(index);
                 }
             }
         }
 
-        private void buttonBrowseEQFolder_Click(object sender, EventArgs e)
+        private void ButtonBrowseEQFolder_Click(object sender, EventArgs e)
         {
             dialogEQFolder.SelectedPath = textEQFolder.Text;
-            
+
             if (dialogEQFolder.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 textEQFolder.Text = dialogEQFolder.SelectedPath;
@@ -137,8 +136,8 @@ namespace Eff2EmtGUI
             listZoneEffs.Enabled = YesNo;
             buttonConvert.Text = YesNo ? "Convert!" : "Abort";
         }
-        
-        private void buttonConvert_Click(object sender, EventArgs e)
+
+        private void ButtonConvert_Click(object sender, EventArgs e)
         {
             switch (buttonConvert.Text)
             {
@@ -157,24 +156,24 @@ namespace Eff2EmtGUI
 
                     threadConverter.RunWorkerAsync(_selectedZones);
                     break;
+
                 case "Abort":
                     threadConverter.CancelAsync();
                     break;
             }
         }
 
-        private void listZoneEffs_ItemChecked(object sender, ItemCheckedEventArgs e)
+        private void ListZoneEffs_ItemChecked(object sender, ItemCheckedEventArgs e)
         {
             CheckIfReady();
         }
 
-        private void threadConverter_DoWork(object sender, DoWorkEventArgs e)
+        private void ThreadConverter_DoWork(object sender, DoWorkEventArgs e)
         {
-            
             List<string> _zoneList = e.Argument as List<string>;
             int _zonesConverted = 0;
             e.Result = DialogResult.OK;
-            
+
             foreach (string _zoneNick in _zoneList)
             {
                 switch (Eff2EmtConverter.ConvertZone(textEQFolder.Text, _zoneNick))
@@ -182,9 +181,11 @@ namespace Eff2EmtGUI
                     case DialogResult.OK:
                         threadConverter.ReportProgress(++_zonesConverted);
                         break;
+
                     case DialogResult.Abort:
                         e.Result = DialogResult.Abort;
                         return;
+
                     case DialogResult.Ignore:
                         break;
                 }
@@ -197,29 +198,41 @@ namespace Eff2EmtGUI
             }
         }
 
-        private void threadConverter_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void ThreadConverter_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             progressConversion.Value = e.ProgressPercentage;
 
-            string _emtFilename = textEQFolder.Text + "\\" + listZoneEffs.CheckedItems[e.ProgressPercentage - 1].Text + ".emt";
-
-            // Don't open every newly merged .emt file if we're batch converting more than 3 files.
-            if ((listZoneEffs.CheckedItems.Count < 4) && File.Exists(_emtFilename))
+            if (listZoneEffs.CheckedItems.Count < 4 && File.Exists(GetEmtFilename(e.ProgressPercentage)))
             {
-                // Open the file in Notepad++ if available, or Notepad if not. Other text file readers could be added as options here.
-
-                foreach (string _textEditor in TextEditors)
-                {
-                    if (File.Exists(_textEditor))
-                    {
-                        System.Diagnostics.Process.Start(_textEditor, _emtFilename);
-                        break;
-                    }
-                }
+                string emtFilename = GetEmtFilename(e.ProgressPercentage);
+                OpenFileInEditor(emtFilename);
             }
         }
 
-        private void threadConverter_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private string GetEmtFilename(int progressPercentage)
+        {
+            string zoneName = listZoneEffs.CheckedItems[progressPercentage - 1].Text;
+            return Path.Combine(textEQFolder.Text, $"{zoneName}.emt");
+        }
+
+        private static void OpenFileInEditor(string filename)
+        {
+            foreach (string editorPath in TextEditors.Where(File.Exists))
+            {
+                System.Diagnostics.Process.Start(editorPath, filename);
+                break; // Open with the first available editor.
+            }
+        }
+
+        // Can be customized with any available text editors. Will be checked from top to bottom, and the first one found will be execute for an .emt file.
+        private static readonly List<string> TextEditors = new List<string>()
+        {
+            @"C:\Program Files (x86)\Notepad++\notepad++.exe",
+            @"C:\Program Files\Notepad++\notepad++.exe",
+            @"C:\Windows\notepad.exe"
+        };
+
+        private void ThreadConverter_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             SetFormEnabled(true);
 
@@ -228,9 +241,11 @@ namespace Eff2EmtGUI
                 case DialogResult.OK:
                     MessageBox.Show("Conversion process completed.", "Conversion Status", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
+
                 case DialogResult.Abort:
                     MessageBox.Show("Conversion process aborted.", "Conversion Status", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     break;
+
                 case DialogResult.Cancel:
                     MessageBox.Show("Conversion process cancelled.", "Conversion Status", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     break;

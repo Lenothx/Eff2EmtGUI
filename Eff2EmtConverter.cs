@@ -1,54 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Eff2EmtGUI
 {
-    class Eff2EmtConverter
+    internal class Eff2EmtConverter
     {
-        public const string EMTLineFormat = ";?,SoundFile (wav=sound mp3/xmi=music),Unknown (0=OK 1=OK),WhenActive (0=Always 1=Daytime 2=Nighttime),Volume (1.0 = 100%),FadeInMS,FadeOutMS,WavLoopType (0=Constant 1=Delayed Repeat),X,Y,Z,WavFullVolRadius,WavMaxAudibleDist,NonZero = RandomizeLocation,ActivationRange,MinRepeatDelay,MaxRepeatDelay,xmiIndex,EchoLevel (50 = Max),IsEnvSound (for option toggle)";
-
-        protected static Dictionary<int, string> HardCodedSoundFiles = new Dictionary<int,string>()
-        {
-            {  39, "death_me" },
-            { 143, "thunder1" },
-            { 144, "thunder2" },
-            { 158, "wind_lp1" },
-            { 159, "rainloop" },
-            { 160, "torch_lp" },
-            { 161, "watundlp" }
-        };
-
-        protected static Dictionary<int, string> DefaultMusicFiles = new Dictionary<int, string>()
-        {
-            {  1, "bothunder.mp3" },
-            {  2, "codecay.mp3" },
-            {  3, "combattheme1.mp3" },
-            {  4, "combattheme2.mp3" },
-            {  5, "deaththeme.mp3" },
-            {  6, "eqtheme.mp3" },
-            {  7, "hohonor.mp3" },
-            {  8, "poair.mp3" },
-            {  9, "podisease.mp3" },
-            { 10, "poearth.mp3" },
-            { 11, "pofire.mp3" },
-            { 12, "poinnovation.mp3" },
-            { 13, "pojustice.mp3" },
-            { 14, "poknowledge.mp3" },
-            { 15, "ponightmare.mp3" },
-            { 16, "postorms.mp3" },
-            { 17, "potactics.mp3" },
-            { 18, "potime.mp3" },
-            { 19, "potorment.mp3" },
-            { 20, "potranquility.mp3" },
-            { 21, "povalor.mp3" },
-            { 22, "powar.mp3" },
-            { 23, "powater.mp3" },
-            { 24, "solrotower.mp3" }
-        };
-
         protected struct EffSoundEntry
         {
             public Int32 UnkRef00;
@@ -99,501 +58,457 @@ namespace Eff2EmtGUI
             public bool IsEnvSound = true;
 
             // ?,SoundFile (wav=sound mp3/xmi=music),Unknown (0=OK 1=OK),WhenActive (0=Always 1=Daytime 2=Nighttime),Volume (1.0 = 100%),FadeInMS,FadeOutMS,WavLoopType (0=Constant 1=Delayed Repeat),X,Y,Z,WavFullVolRadius,WavMaxAudibleDist,NonZero = RandomizeLocation,ActivationRange,MinRepeatDelay,MaxRepeatDelay,xmiIndex,EchoLevel (50 = Max),IsEnvSound (for option toggle)
-            public bool _IsValid
+            public bool IsValid
             {
                 get
                 {
                     return ((SoundFile != null) && (SoundFile.Length > 0));
                 }
             }
-            
+
             public EmtSoundEntry Clone()
             {
-                EmtSoundEntry _new = new EmtSoundEntry();
-
-                _new.EntryType = this.EntryType;
-                _new.SoundFile = this.SoundFile;
-                _new.Reserved1 = this.Reserved1;
-                _new.WhenActive = this.WhenActive;
-                _new.Volume = this.Volume;
-                _new.FadeInMS = this.FadeInMS;
-                _new.FadeOutMS = this.FadeOutMS;
-                _new.WavLoopType = this.WavLoopType;
-                _new.X = this.X;
-                _new.Y = this.Y;
-                _new.Z = this.Z;
-                _new.WavFullVolRadius = this.WavFullVolRadius;
-                _new.WavMaxAudibleDist = this.WavMaxAudibleDist;
-                _new.RandomizeLocation = this.RandomizeLocation;
-                _new.ActivationRange = this.ActivationRange;
-                _new.MinRepeatDelay = this.MinRepeatDelay;
-                _new.MaxRepeatDelay = this.MaxRepeatDelay;
-                _new.xmiIndex = this.xmiIndex;
-                _new.EchoLevel = this.EchoLevel;
-                _new.IsEnvSound = this.IsEnvSound;
+                EmtSoundEntry _new = new EmtSoundEntry
+                {
+                    EntryType = this.EntryType,
+                    SoundFile = this.SoundFile,
+                    Reserved1 = this.Reserved1,
+                    WhenActive = this.WhenActive,
+                    Volume = this.Volume,
+                    FadeInMS = this.FadeInMS,
+                    FadeOutMS = this.FadeOutMS,
+                    WavLoopType = this.WavLoopType,
+                    X = this.X,
+                    Y = this.Y,
+                    Z = this.Z,
+                    WavFullVolRadius = this.WavFullVolRadius,
+                    WavMaxAudibleDist = this.WavMaxAudibleDist,
+                    RandomizeLocation = this.RandomizeLocation,
+                    ActivationRange = this.ActivationRange,
+                    MinRepeatDelay = this.MinRepeatDelay,
+                    MaxRepeatDelay = this.MaxRepeatDelay,
+                    xmiIndex = this.xmiIndex,
+                    EchoLevel = this.EchoLevel,
+                    IsEnvSound = this.IsEnvSound
+                };
 
                 return _new;
             }
-            
+
             public override string ToString()
             {
-                if (!_IsValid)
+                if (!IsValid)
                 {
-                    return "";
+                    return string.Empty;
                 }
-                
-                StringBuilder _line = new StringBuilder();
 
-                _line.Append(EntryType);
-                _line.Append(',');
-                _line.Append(SoundFile);
-                _line.Append(',');
-                _line.Append(Reserved1);
-                _line.Append(',');
-                _line.Append(WhenActive);
-                _line.Append(',');
-                _line.Append(Volume.ToString("F1"));
-                _line.Append(',');
-                _line.Append(FadeInMS);
-                _line.Append(',');
-                _line.Append(FadeOutMS);
-                _line.Append(',');
-                _line.Append(WavLoopType);
-                _line.Append(',');
-                _line.Append(X.ToString("F1"));
-                _line.Append(',');
-                _line.Append(Y.ToString("F1"));
-                _line.Append(',');
-                _line.Append(Z.ToString("F1"));
-                _line.Append(',');
-                _line.Append(WavFullVolRadius.ToString("F1"));
-                _line.Append(',');
-                _line.Append(WavMaxAudibleDist.ToString("F1"));
-                _line.Append(',');
-                _line.Append(RandomizeLocation ? "1" : "0");
-                _line.Append(',');
-                _line.Append(ActivationRange);
-                _line.Append(',');
-                _line.Append(MinRepeatDelay);
-                _line.Append(',');
-                _line.Append(MaxRepeatDelay);
-                _line.Append(',');
-                _line.Append(xmiIndex);
-                _line.Append(',');
-                _line.Append(EchoLevel);
-                _line.Append(',');
-                _line.Append(IsEnvSound ? "1" : "0");
+                var fields = new object[]
+                {
+        EntryType,
+        SoundFile,
+        Reserved1,
+        WhenActive,
+        Volume.ToString("F1"),
+        FadeInMS,
+        FadeOutMS,
+        WavLoopType,
+        X.ToString("F1"),
+        Y.ToString("F1"),
+        Z.ToString("F1"),
+        WavFullVolRadius.ToString("F1"),
+        WavMaxAudibleDist.ToString("F1"),
+        RandomizeLocation ? "1" : "0",
+        ActivationRange,
+        MinRepeatDelay,
+        MaxRepeatDelay,
+        xmiIndex,
+        EchoLevel,
+        IsEnvSound ? "1" : "0"
+                };
 
-                return _line.ToString();
+                // Convert all fields to strings and join them with commas.
+                return string.Join(",", fields.Select(field => field?.ToString() ?? string.Empty));
             }
         }
-
-        protected static Dictionary<int, string> mp3indexFiles = null;
-
-        protected static List<string> SoundBank_Emit;
-        protected static List<string> SoundBank_Loop;
 
         // Return the entry from mp3index.txt on line number abs(ID)
-        protected static string mp3indexFile(int ID)
-        {
-            if (mp3indexFiles == null)
-            {
-                return ""; // Better not ever get here! But just in case.
-            }
-            
-            if (ID < 0)
-            {
-                ID = -ID;
-            }
-
-            string _result;
-
-            if (mp3indexFiles.TryGetValue(ID, out _result))
-            {
-                return _result;
-            }
-
-            return "";
-        }
+        protected static string Mp3indexFile(int ID) => Eff2EmtConverterHelpers.mp3indexFiles?.TryGetValue(Math.Abs(ID), out var result) == true ? result : "";
 
         // Convert SoundID from ZoneNick_sounds.eff into a sound file name
-        protected static string SoundFileNumber(int SoundID)
+        protected static string SoundFileNumber(int soundID)
         {
-            string _result;
+            if (soundID == 0)
+                return ""; // No sound
 
-            // 0 == None
-            if (SoundID == 0)
-            {
-                return "";
-            }
+            if (soundID < 0)
+                return Mp3indexFile(soundID); // Music File Reference
 
-            // < 0 == Music File Reference in mp3index.txt
-            if (SoundID < 0)
-            {
-                return mp3indexFile(SoundID);
-            }
+            if (soundID < 32)
+                return GetSoundFromList(Eff2EmtConverterHelpers.SoundBank_Emit, soundID - 1); // EMIT Section Sound Reference
 
-            // 1 - 31 == Sound File Reference in ZoneNick_sndbnk.eff (EMIT section)
-            if (SoundID < 32)
-            {
-                if ((SoundBank_Emit == null) || (SoundID > SoundBank_Emit.Count))
-                {
-                    return "";
-                }
-                else
-                {
-                    return SoundBank_Emit[SoundID - 1];
-                }
-            }
+            if (soundID > 161)
+                return GetSoundFromList(Eff2EmtConverterHelpers.SoundBank_Loop, soundID - 162); // LOOP Section Sound Reference
 
-            // 162-169 == Sound File Reference in ZoneNick_sndbnk.eff (LOOP section)
-            if (SoundID > 161)
-            {
-                SoundID -= 161;
-
-                if ((SoundBank_Loop == null) || (SoundID > SoundBank_Loop.Count))
-                {
-                    return "";
-                }
-                else
-                {
-                    return SoundBank_Loop[SoundID - 1];
-                }
-            }
-
-            // 32 - 161 == Hard-Coded Sound Files
-            if (HardCodedSoundFiles.TryGetValue(SoundID, out _result))
-            {
-                return _result;
-            }
-
-            // Don't think we should ever get here, but if we do, it's an unsupported SoundID (maybe I missed a hard-coded sound file id?)
-            return "";
+            // Hard-Coded Sound Files
+            return Eff2EmtConverterHelpers.HardCodedSoundFiles.TryGetValue(soundID, out var result) ? result : "";
         }
+
+        private static string GetSoundFromList(IList<string> soundList, int index) =>
+            soundList != null && index >= 0 && index < soundList.Count ? soundList[index] : "";
 
         public static DialogResult ConvertZone(string EQFolder, string ZoneNick)
         {
-            if ((EQFolder == null) || (ZoneNick == null) || (EQFolder == "") || (ZoneNick == ""))
+            if (!ValidateInputs(EQFolder, ZoneNick))
             {
                 return DialogResult.Abort;
             }
-            
-            string _zoneSoundEntriesFilename = EQFolder + "\\" + ZoneNick + "_sounds.eff";
-            string _zoneSoundBankFilename = EQFolder + "\\" + ZoneNick + "_sndbnk.eff";
-            string _zoneSoundEmitterFilename = EQFolder + "\\" + ZoneNick + ".emt";
 
-            string _line;
+            string _zoneSoundEntriesFilename = Path.Combine(EQFolder, $"{ZoneNick}_sounds.eff");
+            string _zoneSoundBankFilename = Path.Combine(EQFolder, $"{ZoneNick}_sndbnk.eff");
+            string _zoneSoundEmitterFilename = Path.Combine(EQFolder, $"{ZoneNick}.emt");
 
-            // Preliminary: Read the mp3index.txt file's entries, in case they've been changed from the defaults.
+            InitializeMp3IndexFiles(EQFolder);
 
-            if (mp3indexFiles == null)
-            {
-                if (File.Exists(EQFolder + "\\mp3index.txt"))
-                {
-                    mp3indexFiles = new Dictionary<int, string>();
-                    
-                    int _mp3LineNumber = 1;
+            // Step 1: Read ZoneNick_sounds.eff (Required)
+            BinaryReader _effFile = OpenBinaryFileWithRetry(_zoneSoundEntriesFilename, "Sound Entries");
 
-                    using (StreamReader _in = new StreamReader(EQFolder + "\\mp3index.txt"))
-                    {
-                        while ((_line = _in.ReadLine()) != null)
-                        {
-                            mp3indexFiles[_mp3LineNumber++] = _line;
-                        }
-                    }
-                }
-                else
-                {
-                    // No mp3index.txt file found?? Use the defaults.
+            if (_effFile == null)
+                return DialogResult.Abort;
 
-                    mp3indexFiles = DefaultMusicFiles;
+            // Step 2: Read existing .emt file contents for merging
+            List<string> _emtEntries = ReadEmitterFile(_zoneSoundEmitterFilename);
 
-                    MessageBox.Show("Note: Could not find the mp3index file at the following location:\n\n" + EQFolder + "\\mp3index.txt\n\nUsing default values from Live.", "No mp3index.txt - Using Defaults", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
+            // Step 3: Open or create ZoneNick.emt for writing
+            StreamWriter _emtFile = OpenTextFileWithRetry(_zoneSoundEmitterFilename, "Sound Emitter");
+            if (_emtFile == null)
+                return DialogResult.Abort;
 
+            // Step 4: Read sound bank file and categorize sounds
+            ReadSoundBankFile(_zoneSoundBankFilename);
 
-            List<string> _emtEntries = new List<string>();
+            // Step 5: Initialize the .emt file with header if needed
+            WriteEmtHeader(_emtEntries, _emtFile);
 
-            // Step 1 - Open ZoneNick_sounds.eff (Required)
-
-            BinaryReader _effFile = null;
-
-            while (_effFile == null)
-            {
-                try
-                {
-                    _effFile = new BinaryReader(File.OpenRead(_zoneSoundEntriesFilename));
-                }
-                catch (Exception ex)
-                {
-                    switch (MessageBox.Show("Could not create Sound Entries File:\n\n" + _zoneSoundEntriesFilename + "\n\nError Message:\n\n" + ex.Message, "Sound Entry Read Error", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Error))
-                    {
-                        case System.Windows.Forms.DialogResult.Ignore:
-                            return DialogResult.Ignore;
-                        case System.Windows.Forms.DialogResult.Abort:
-                            return DialogResult.Abort;
-                    }
-                }
-            }
-
-            // Step 2 - Open ZoneNick.emt if it exists, and read in the current contents for merging our new entries into
-
-            if (File.Exists(_zoneSoundEmitterFilename))
-            {
-                // Read in existing lines for the merge.
-                using (StreamReader _emtFileIn = new StreamReader(_zoneSoundEmitterFilename))
-                {
-                    while ((_line = _emtFileIn.ReadLine()) != null)
-                    {
-                        _emtEntries.Add(_line);
-                    }
-                }
-            }
-
-            // Step 3 - Create or replace ZoneNick.emt
-
-            StreamWriter _emtFile = null;
-
-            while (_emtFile == null)
-            {
-                try
-                {
-                    _emtFile = new StreamWriter(_zoneSoundEmitterFilename);
-                }
-                catch (Exception ex)
-                {
-                    switch (MessageBox.Show("Could not create Sound Emitter File:\n\n" + _zoneSoundEmitterFilename + "\n\nError Message:\n\n" + ex.Message, "Sound Emitter Creation Error", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Error))
-                    {
-                        case System.Windows.Forms.DialogResult.Ignore:
-                            return DialogResult.Ignore;
-                        case System.Windows.Forms.DialogResult.Abort:
-                            return DialogResult.Abort;
-                    }
-                }
-            }
-
-            // Step 4 - Read sound file references from ZoneNick_sndbnk.eff (Required unless only background music entries are in ZoneNick_sounds.eff)
-
-            StreamReader _bnkFile = null;
-
-            SoundBank_Emit = new List<string>();
-            SoundBank_Loop = new List<string>();
-
-            bool _inEmitSection = true;
-
-            try
-            {
-                _bnkFile = new StreamReader(_zoneSoundBankFilename);
-            }
-            catch
-            {
-                _bnkFile = null;
-            }
-
-            if (_bnkFile != null)
-            {
-                while ((_line = _bnkFile.ReadLine()) != null)
-                {
-                    _line = _line.Trim();
-
-                    if (_line == "EMIT")
-                    {
-                        _inEmitSection = true;
-                    }
-                    else if ((_line == "LOOP") || (_line == "RAND"))
-                    {
-                        _inEmitSection = false;
-                    }
-                    else if (_line != "")
-                    {
-                        if (_inEmitSection)
-                        {
-                            SoundBank_Emit.Add(_line);
-                        }
-                        else
-                        {
-                            SoundBank_Loop.Add(_line);
-                        }
-                    }
-                }
-
-                _bnkFile.Close();
-            }
-
-            // Step 5 - Initialize ZoneNick.emt
-
-            if ((_emtEntries.Count < 1) || (_emtEntries[0].Length < 1) || (_emtEntries[0][0] != ';'))
-            {
-                _emtFile.WriteLine(EMTLineFormat); // Add our format line for human-readable reference, if it isn't already there.
-            }
-
-            foreach (string _emtEntry in _emtEntries)
-            {
-                _emtFile.WriteLine(_emtEntry); // Write the existing entries to the file. We'll append any new ones to the end.
-            }
-
-            // Step 6 - Read binary entries from ZoneNick_sounds.eff and write text entries to ZoneNick.emt if they aren't already there.
-
-            while ((_effFile.BaseStream.Length - _effFile.BaseStream.Position) >= 84)
-            {
-                EffSoundEntry _effEntry;
-
-                _effEntry.UnkRef00 = _effFile.ReadInt32();
-                _effEntry.UnkRef04 = _effFile.ReadInt32();
-                _effEntry.Reserved = _effFile.ReadInt32();
-                _effEntry.Sequence = _effFile.ReadInt32();
-                _effEntry.X = _effFile.ReadSingle();
-                _effEntry.Y = _effFile.ReadSingle();
-                _effEntry.Z = _effFile.ReadSingle();
-                _effEntry.Radius = _effFile.ReadSingle();
-                _effEntry.Cooldown1 = _effFile.ReadInt32();
-                _effEntry.Cooldown2 = _effFile.ReadInt32();
-                _effEntry.RandomDelay = _effFile.ReadInt32();
-                _effEntry.Unk44 = _effFile.ReadInt32();
-                _effEntry.SoundID1 = _effFile.ReadInt32();
-                _effEntry.SoundID2 = _effFile.ReadInt32();
-                _effEntry.SoundType = _effFile.ReadByte();
-                _effEntry.UnkPad57 = _effFile.ReadByte();
-                _effEntry.UnkPad58 = _effFile.ReadByte();
-                _effEntry.UnkPad59 = _effFile.ReadByte();
-                _effEntry.AsDistance = _effFile.ReadInt32();
-                _effEntry.UnkRange64 = _effFile.ReadInt32();
-                _effEntry.FadeOutMS = _effFile.ReadInt32();
-                _effEntry.UnkRange72 = _effFile.ReadInt32();
-                _effEntry.FullVolRange = _effFile.ReadInt32();
-                _effEntry.UnkRange80 = _effFile.ReadInt32();
-
-                EmtSoundEntry _sound1 = new EmtSoundEntry();
-                EmtSoundEntry _sound2;
-
-                string _soundFile1;
-                string _soundFile2;
-
-                switch (_effEntry.SoundType)
-                {
-                    case 0: // Day/Night Sound Effect, Constant Volume
-                        _soundFile1 = SoundFileNumber(_effEntry.SoundID1);
-                        _soundFile2 = SoundFileNumber(_effEntry.SoundID2);
-                        _sound1.WhenActive = 1;
-                        break;
-                    case 1: // Background Music
-                        _soundFile1 = (_effEntry.SoundID1 < 0) ? SoundFileNumber(_effEntry.SoundID1) : (_effEntry.SoundID1 == 0) ? "" : ZoneNick + ".xmi";
-                        if (_effEntry.SoundID1 == _effEntry.SoundID2)
-                        {
-                            _soundFile2 = "";
-                            _sound1.WhenActive = 0; // Same music and location for day and night. No need to add two entries to .emt file.
-                        }
-                        else
-                        {
-                            _soundFile2 = (_effEntry.SoundID2 < 0) ? SoundFileNumber(_effEntry.SoundID2) : (_effEntry.SoundID2 == 0) ? "" : ZoneNick + ".xmi";
-                            _sound1.WhenActive = 1;
-                        }
-
-                        _sound1.xmiIndex = ((_effEntry.SoundID1 > 0) && (_effEntry.SoundID1 < 32)) ? _effEntry.SoundID1 : 0;
-                        break;
-                    case 2: // Static Sound Effect
-                        _soundFile1 = SoundFileNumber(_effEntry.SoundID1);
-                        _soundFile2 = "";
-
-                        _sound1.Volume = (_effEntry.AsDistance < 0) ? 0.0f : (_effEntry.AsDistance > 3000) ? 0.0f : (3000.0f - (float)_effEntry.AsDistance) / 3000.0f;
-                        break;
-                    case 3: // Day/Night Sound Effect, Volume by Distance
-                        _soundFile1 = SoundFileNumber(_effEntry.SoundID1);
-                        _soundFile2 = SoundFileNumber(_effEntry.SoundID2);
-
-                        _sound1.Volume = (_effEntry.AsDistance < 0) ? 0.0f : (_effEntry.AsDistance > 3000) ? 0.0f : (3000.0f - (float)_effEntry.AsDistance) / 3000.0f;
-                        _sound1.WhenActive = 1;
-                        break;
-                    default: // Unsupported
-                        continue;
-                }
-
-                if ((_soundFile1.Length > 0) && (_soundFile1.IndexOf('.') < 0))
-                {
-                    _soundFile1 += ".wav";
-                }
-
-                _sound1.SoundFile = _soundFile1;
-
-                _sound1.FadeOutMS = (_effEntry.FadeOutMS <= 0) ? 0 : (_effEntry.FadeOutMS < 100) ? 100 : _effEntry.FadeOutMS; // Sanity check: make sure FadeOutMS is either 0 or 100+ milliseconds
-
-                // Fade in does not appear to be utilized in ZoneNick_sounds.eff, even if one of the Unk fields is supposed to map to it. Make sounds fade in at twice the speed of fading out, 
-                // so a running player doesn't feel like a sound effect finished fading in after they already passed by.
-                _sound1.FadeInMS = Math.Min(_sound1.FadeOutMS / 2, 5000); // Cap at 5 second FadeIn. Some music entries have a looooong FadeOut.
-
-                _sound1.X = _effEntry.X;
-                _sound1.Y = _effEntry.Y;
-                _sound1.Z = _effEntry.Z;
-                if (_effEntry.SoundType != 1) // Music files ignore cooldowns in ZoneNick.emt.
-                {
-                    _sound1.WavLoopType = (_effEntry.Cooldown1 <= 0) && (_effEntry.RandomDelay <= 0) ? 0 : 1;
-                    _sound1.MinRepeatDelay = (_sound1.WavLoopType == 0) ? 0 : Math.Max(_effEntry.Cooldown1, 0);
-                    _sound1.MaxRepeatDelay = (_sound1.WavLoopType == 0) ? 0 : Math.Max(_effEntry.Cooldown1, 0) + Math.Max(_effEntry.RandomDelay, 0);
-                }
-                _sound1.WavFullVolRadius = (_effEntry.SoundType == 0) ? _effEntry.Radius : Math.Max(_effEntry.FullVolRange, 0);
-                _sound1.ActivationRange = (Int32)_effEntry.Radius;
-                _sound1.WavMaxAudibleDist = _sound1.ActivationRange; // No fields in ZoneNick_sounds.eff appear to map to this, so use the activation range.
-                _sound1.IsEnvSound = (_effEntry.SoundType != 1);
-
-                if ((_soundFile2 == null) || (_soundFile2 == ""))
-                {
-                    _sound2 = new EmtSoundEntry();
-                }
-                else
-                {
-                    _sound2 = _sound1.Clone();
-
-                    if (_soundFile2.IndexOf('.') < 0)
-                    {
-                        _soundFile2 += ".wav";
-                    }
-
-                    _sound2.SoundFile = _soundFile2;
-
-                    if (_effEntry.SoundType != 1) // Music files ignore cooldowns in ZoneNick.emt.
-                    {
-                        _sound2.WavLoopType = (_effEntry.Cooldown2 <= 0) && (_effEntry.RandomDelay <= 0) ? 0 : 1;
-                        _sound2.MinRepeatDelay = Math.Max(_effEntry.Cooldown2, 0);
-                        _sound2.MaxRepeatDelay = Math.Max(_effEntry.Cooldown2, 0) + Math.Max(_effEntry.RandomDelay, 0);
-                    }
-
-                    switch (_effEntry.SoundType)
-                    {
-                        case 0: // Day/Night Sound Effect, Constant Volume
-                            _sound2.WhenActive = 2;
-                            break;
-                        case 1: // Background Music
-                            _sound2.WhenActive = 2;
-                            _sound2.xmiIndex = ((_effEntry.SoundID2 > 0) && (_effEntry.SoundID2 < 32)) ? _effEntry.SoundID2 : 0;
-                            break;
-                        case 3: // Day/Night Sound Effect, Volume by Distance
-                            _sound2.WhenActive = 2;
-                            break;
-                        default: // Unsupported
-                            continue;
-                    }
-                }
-
-                _soundFile1 = _sound1.ToString();
-                _soundFile2 = _sound2.ToString();
-
-                if ((_soundFile1.Length > 0) && (!_emtEntries.Contains(_soundFile1)))
-                {
-                    _emtEntries.Add(_soundFile1);
-                    _emtFile.WriteLine(_soundFile1);
-                }
-
-                if ((_soundFile2.Length > 0) && (!_emtEntries.Contains(_soundFile2)))
-                {
-                    _emtEntries.Add(_soundFile2);
-                    _emtFile.WriteLine(_soundFile2);
-                }
-            }
+            // Step 6: Process and convert binary entries into text entries
+            ConvertEffEntriesToEmt(_effFile, _emtEntries, _emtFile, ZoneNick);
 
             _emtFile.Close();
+            return DialogResult.OK;
+        }
 
-            return System.Windows.Forms.DialogResult.OK;
+        // Validate folder and zone nick inputs
+        private static bool ValidateInputs(string EQFolder, string ZoneNick)
+        {
+            return !string.IsNullOrEmpty(EQFolder) && !string.IsNullOrEmpty(ZoneNick);
+        }
+
+        // Initialize or read the mp3index files
+        private static void InitializeMp3IndexFiles(string EQFolder)
+        {
+            if (Eff2EmtConverterHelpers.mp3indexFiles != null) return;
+
+            string mp3IndexPath = Path.Combine(EQFolder, "mp3index.txt");
+
+            if (File.Exists(mp3IndexPath))
+            {
+                Eff2EmtConverterHelpers.mp3indexFiles = new Dictionary<int, string>();
+                int lineNumber = 1;
+
+                foreach (var line in File.ReadAllLines(mp3IndexPath))
+                {
+                    Eff2EmtConverterHelpers.mp3indexFiles[lineNumber++] = line;
+                }
+            }
+            else
+            {
+                Eff2EmtConverterHelpers.mp3indexFiles = Eff2EmtConverterHelpers.DefaultMusicFiles;
+                MessageBox.Show($"Note: Could not find the mp3index file at {mp3IndexPath}. Using default values from Live.",
+                                "No mp3index.txt - Using Defaults", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        // Open a binary file with retry logic
+        private static BinaryReader OpenBinaryFileWithRetry(string filename, string fileType)
+        {
+            BinaryReader file = null;
+            while (file == null)
+            {
+                try
+                {
+                    file = new BinaryReader(File.OpenRead(filename));
+                }
+                catch (Exception ex)
+                {
+                    var result = MessageBox.Show($"Could not create {fileType} File:\n\n{filename}\n\nError Message:\n\n{ex.Message}",
+                                                 $"{fileType} Read Error", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Error);
+
+                    if (result == DialogResult.Ignore)
+                        return null;
+                    if (result == DialogResult.Abort)
+                        return null;
+                }
+            }
+            return file;
+        }
+
+        // Read the .emt emitter file
+        private static List<string> ReadEmitterFile(string filename)
+        {
+            var entries = new List<string>();
+            if (File.Exists(filename))
+            {
+                entries.AddRange(File.ReadLines(filename));
+            }
+            return entries;
+        }
+
+        // Open a text file with retry logic
+        private static StreamWriter OpenTextFileWithRetry(string filename, string fileType)
+        {
+            StreamWriter file = null;
+            while (file == null)
+            {
+                try
+                {
+                    file = new StreamWriter(filename);
+                }
+                catch (Exception ex)
+                {
+                    var result = MessageBox.Show($"Could not create {fileType} File:\n\n{filename}\n\nError Message:\n\n{ex.Message}",
+                                                 $"{fileType} Creation Error", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Error);
+
+                    if (result == DialogResult.Ignore)
+                        return null;
+                    if (result == DialogResult.Abort)
+                        return null;
+                }
+            }
+            return file;
+        }
+
+        // Read sound bank file and categorize sounds into emit and loop sections
+        private static void ReadSoundBankFile(string filename)
+        {
+            Eff2EmtConverterHelpers.SoundBank_Emit = new List<string>();
+            Eff2EmtConverterHelpers.SoundBank_Loop = new List<string>();
+
+            if (!File.Exists(filename))
+            {
+                Console.WriteLine($"Sound bank file {filename} not found.");
+                return;
+            }
+
+            bool inEmitSection = true;
+
+            foreach (var line in File.ReadLines(filename))
+            {
+                var trimmedLine = line.Trim();
+
+                switch (trimmedLine)
+                {
+                    case "EMIT":
+                        inEmitSection = true;
+                        break;
+
+                    case "LOOP":
+                    case "RAND":
+                        inEmitSection = false;
+                        break;
+
+                    default:
+                        if (!string.IsNullOrWhiteSpace(trimmedLine))
+                        {
+                            if (inEmitSection)
+                            {
+                                Eff2EmtConverterHelpers.SoundBank_Emit.Add(trimmedLine);
+                            }
+                            else
+                            {
+                                Eff2EmtConverterHelpers.SoundBank_Loop.Add(trimmedLine);
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        // Write the EMT header line if necessary
+        private static void WriteEmtHeader(List<string> emtEntries, StreamWriter emtFile)
+        {
+            if (emtEntries.Count == 0 || emtEntries[0].Length < 1 || emtEntries[0][0] != ';')
+            {
+                emtFile.WriteLine(Eff2EmtConverterHelpers.EMTLineFormat);
+            }
+        }
+
+        // Convert binary sound entries into .emt text entries
+        private static void ConvertEffEntriesToEmt(BinaryReader effFile, List<string> emtEntries, StreamWriter emtFile, string zoneNick)
+        {
+            while ((effFile.BaseStream.Length - effFile.BaseStream.Position) >= 84)
+            {
+                EffSoundEntry effEntry = ReadEffEntry(effFile);
+
+                EmtSoundEntry sound1 = CreateEmtSoundEntry(effEntry, zoneNick, out EmtSoundEntry sound2);
+
+                WriteSoundEntryToFile(sound1, emtEntries, emtFile);
+                WriteSoundEntryToFile(sound2, emtEntries, emtFile);
+            }
+        }
+
+        // Read a single EffSoundEntry from the binary reader
+        private static EffSoundEntry ReadEffEntry(BinaryReader effFile)
+        {
+            return new EffSoundEntry
+            {
+                UnkRef00 = effFile.ReadInt32(),
+                UnkRef04 = effFile.ReadInt32(),
+                Reserved = effFile.ReadInt32(),
+                Sequence = effFile.ReadInt32(),
+                X = effFile.ReadSingle(),
+                Y = effFile.ReadSingle(),
+                Z = effFile.ReadSingle(),
+                Radius = effFile.ReadSingle(),
+                Cooldown1 = effFile.ReadInt32(),
+                Cooldown2 = effFile.ReadInt32(),
+                RandomDelay = effFile.ReadInt32(),
+                Unk44 = effFile.ReadInt32(),
+                SoundID1 = effFile.ReadInt32(),
+                SoundID2 = effFile.ReadInt32(),
+                SoundType = effFile.ReadByte(),
+                UnkPad57 = effFile.ReadByte(),
+                UnkPad58 = effFile.ReadByte(),
+                UnkPad59 = effFile.ReadByte(),
+                AsDistance = effFile.ReadInt32(),
+                UnkRange64 = effFile.ReadInt32(),
+                FadeOutMS = effFile.ReadInt32(),
+                UnkRange72 = effFile.ReadInt32(),
+                FullVolRange = effFile.ReadInt32(),
+                UnkRange80 = effFile.ReadInt32()
+            };
+        }
+
+        // Create and configure EmtSoundEntry objects based on the EffSoundEntry
+        private static EmtSoundEntry CreateEmtSoundEntry(EffSoundEntry effEntry, string zoneNick, out EmtSoundEntry sound2)
+        {
+            // Initialize the primary sound entry based on effEntry data
+            var sound1 = new EmtSoundEntry
+            {
+                SoundFile = GetSoundFile(effEntry.SoundID1, zoneNick),
+                WhenActive = 1,
+                FadeOutMS = Math.Max(effEntry.FadeOutMS, 100),
+                FadeInMS = GetFadeInMS(effEntry.FadeOutMS),
+                X = effEntry.X,
+                Y = effEntry.Y,
+                Z = effEntry.Z,
+                Volume = GetVolumeByDistance(effEntry.AsDistance, effEntry.SoundType),
+                WavFullVolRadius = (effEntry.SoundType == 0) ? effEntry.Radius : Math.Max(effEntry.FullVolRange, 0),
+                ActivationRange = (int)effEntry.Radius,
+                WavMaxAudibleDist = effEntry.Radius, // Set max audible distance to activation range if no other mapping available
+                IsEnvSound = (effEntry.SoundType != 1), // Music files ignore cooldowns in ZoneNick.emt.
+                xmiIndex = (effEntry.SoundType == 1 && effEntry.SoundID1 > 0 && effEntry.SoundID1 < 32) ? effEntry.SoundID1 : 0
+            };
+
+            // Apply loop type and delay settings if it's not a music file
+            if (effEntry.SoundType != 1)
+            {
+                SetLoopTypeAndDelay(sound1, effEntry.Cooldown1, effEntry.RandomDelay);
+            }
+
+            // Set the secondary sound entry based on `SoundID2` and make necessary adjustments
+            sound2 = null;
+            string soundFile2 = GetSoundFile(effEntry.SoundID2, zoneNick);
+
+            if (!string.IsNullOrEmpty(soundFile2))
+            {
+                // Create a copy of sound1 and modify it as needed for sound2
+                sound2 = sound1.Clone();
+                sound2.SoundFile = soundFile2;
+
+                // Apply loop type and delay settings for sound2
+                if (effEntry.SoundType != 1)
+                {
+                    SetLoopTypeAndDelay(sound2, effEntry.Cooldown2, effEntry.RandomDelay);
+                }
+
+                // Adjust `WhenActive` and `xmiIndex` depending on sound type
+                switch (effEntry.SoundType)
+                {
+                    case 0: // Day/Night Sound Effect, Constant Volume
+                        sound2.WhenActive = 2;
+                        break;
+
+                    case 1: // Background Music
+                        sound2.WhenActive = 2;
+                        sound2.xmiIndex = (effEntry.SoundID2 > 0 && effEntry.SoundID2 < 32) ? effEntry.SoundID2 : 0;
+                        break;
+
+                    case 3: // Day/Night Sound Effect, Volume by Distance
+                        sound2.WhenActive = 2;
+                        break;
+                }
+            }
+
+            // Ensure the primary sound file name has the correct file extension
+            if (!string.IsNullOrEmpty(sound1.SoundFile) && !sound1.SoundFile.Contains("."))
+            {
+                sound1.SoundFile += ".wav";
+            }
+
+            // Ensure the secondary sound file name has the correct file extension
+            if (sound2 != null && !sound2.SoundFile.Contains("."))
+            {
+                sound2.SoundFile += ".wav";
+            }
+
+            return sound1;
+        }
+
+        // Helper methods used within CreateEmtSoundEntry
+
+        private static string GetSoundFile(int soundID, string zoneNick)
+        {
+            string soundFile = SoundFileNumber(soundID);
+            if (soundID > 0 && string.IsNullOrEmpty(soundFile))
+            {
+                soundFile = $"{zoneNick}.xmi";
+            }
+
+            return soundFile.Contains('.') ? soundFile : $"{soundFile}.wav";
+        }
+
+        private static float GetVolumeByDistance(int distance, int soundType)
+        {
+            // Check if the soundType should use volume by distance calculation
+            if (soundType == 2 || soundType == 3)
+            {
+                // Return 0.0f if distance is out of range, otherwise calculate the volume
+                if (distance < 0 || distance > 3000)
+                {
+                    return 0.0f;
+                }
+                return (3000.0f - distance) / 3000.0f;
+            }
+
+            // Default volume for other sound types
+            return 1.0f;
+        }
+
+        private static int GetFadeInMS(int fadeOutMS) => Math.Min(fadeOutMS / 2, 5000);
+
+        private static void SetLoopTypeAndDelay(EmtSoundEntry sound, int cooldown, int randomDelay)
+        {
+            sound.WavLoopType = (cooldown <= 0 && randomDelay <= 0) ? 0 : 1;
+            sound.MinRepeatDelay = sound.WavLoopType == 0 ? 0 : Math.Max(cooldown, 0);
+            sound.MaxRepeatDelay = sound.MinRepeatDelay + Math.Max(randomDelay, 0);
+        }
+
+        // Write a single EmtSoundEntry to the .emt file if it's not already present
+        private static void WriteSoundEntryToFile(EmtSoundEntry soundEntry, List<string> emtEntries, StreamWriter emtFile)
+        {
+            if (soundEntry != null && !emtEntries.Contains(soundEntry.Clone().ToString()))
+            {
+                emtFile.WriteLine(soundEntry.Clone().ToString());
+            }
         }
     }
 }
